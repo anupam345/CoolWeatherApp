@@ -8,6 +8,8 @@ import Table from 'rc-table';
 import { postItinerary } from './api'
 import axios from 'axios'
 import Modaler from './Modaler'
+
+// Table colums
 const columns = [
 	{
 		title: 'City Name',
@@ -52,6 +54,8 @@ class App extends Component {
 
 	constructor(props) {
 		super(props);
+
+		// States 
 		this.state = {
 			'config': {},
 			//city
@@ -71,11 +75,10 @@ class App extends Component {
 
 		};
 		this.tableData = []
-		//this.listdata = {},
-		//this.performSearch = this.performSearch.bind(this);
 		this.filterDates = this.filterDates.bind(this);
 	}
 
+// React lifecycle method load existing itineraries
 	componentDidMount() {
 		var tempOptions = []
 		axios.get("http://localhost:8082/itinerary")
@@ -98,6 +101,8 @@ class App extends Component {
 
 		console.log(this.state.options)
 	}
+
+	// handle submit form when user clicks submit
 	handleSubmit=(e)=> {
 		e.preventDefault();
 		var query = this.state.value;
@@ -106,7 +111,7 @@ class App extends Component {
 		}).then(resData => {
 			console.log(JSON.stringify(resData));
 			if (!resData.list) {
-				alert("Please check input");
+				alert("Please check input or internet connection");
 			} else {
 
 				const city = resData.city.name;
@@ -143,6 +148,7 @@ class App extends Component {
 
 		});
 	}
+	// Method to filterout data from api calls based on the date entered by user
 	filterDates(data) {
 		let today = this.state.selectedDate;
 		let dd = String(today.getDate()).padStart(2, '0');
@@ -160,11 +166,8 @@ class App extends Component {
 		return res
 	}
 
-	// handleSubmit = (event) => {
-	// 	this.setState({ value: event.target.value });
-	// 	this.performSearch();
 
-	// }
+	// Triggers on the click of reset button
 	reset = () => {
 		this.setState({
 			data: [],
@@ -175,15 +178,18 @@ class App extends Component {
 
 
 	}
+	// When your types in the input box
 	handleInputChange = (event) => {
 		this.setState({ value: event.target.value });
 	}
 
+	// when a new date is picked by user
 	handleDateChange = (date) => {
 		console.log('this.state.date', this.state.date);
 		this.setState({ selectedDate: date });
 	}
 
+	// when user clicks on the save button
 	saveItinerary = (e) => {
 		e.preventDefault();
 		console.log(this.state.savedIti)
@@ -214,9 +220,11 @@ class App extends Component {
 			alert("Saved")
 		}
 	}
+	// when user types in itinerary name
 	saveInputChnage = (e) => {
 		this.setState({ savedIti: e.target.value });
 	}
+	// Loads existing itineraries into table
 	handleChange = (e) => {
 		this.setState({ data: [] })
 		console.log(e.target.value)
@@ -238,6 +246,8 @@ class App extends Component {
 			})
 		console.log(this.state.options)
 	}
+
+	//calls api to fetch summary
 	generateSummary = (e) => {
 		let itineraryName = this.state.savedIti;
 		let data = this.state.data;
@@ -256,19 +266,19 @@ class App extends Component {
 			.catch(error=>{
 				console.log(error)
 			})
-
-		//console.log("result",res.data)
-
 	}
 
+	// Modal opens when generate summary button clicked 
 	showStateModal = () => {
 		this.setState({ show: true })
 	  }
 	
+	  // Modal closes when close button clicked
 	hideStateModal = () => {
 		this.setState({ show: false })
 	  }
 
+	// renders the view 
 	render() {
 		const { data } = this.state;
 		//console.log("length",this.state.data.length)
