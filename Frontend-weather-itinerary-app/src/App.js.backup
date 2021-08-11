@@ -1,0 +1,165 @@
+import React, { Component } from 'react';
+import logo from './logo.svg';
+import './App.css';
+var Alert = require('react-bootstrap').Alert;
+var samlTemplate = "<samlp:Response xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\" xmlns:saml=\"urn:oasis:names:tc:SAML:2.0:assertion\" ID=\"_3ecb0015-1eea-4dd4-a36f-97a6bc0dd3cb\" Version=\"2.0\" IssueInstant=\"{1}\" 			  Destination=\"{0}\" Consent=\"urn:oasis:names:tc:SAML:2.0:consent:unspecified\"> 			  <saml:Issuer>http://sso.se2.com/adfs/services/trust</saml:Issuer> 			  <samlp:Status> 				<samlp:StatusCode Value=\"urn:oasis:names:tc:SAML:2.0:status:Success\"/> 			  </samlp:Status> 			  <saml:Assertion ID=\"_74e00266-83b0-4ef5-9a64-7477abd64b0a\" IssueInstant=\"{1}\" Version=\"2.0\"> 				<saml:Issuer>http://sso.se2.com/adfs/services/trust</saml:Issuer> 				<saml:Subject> 				  <saml:NameID SPNameQualifier=\"http://sso.se2.com/adfs/services/trust\" Format=\"urn:oasis:names:tc:SAML:2.0:nameid-format:transient\"/> 				  <saml:SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\"> 					<saml:SubjectConfirmationData NotOnOrAfter=\"{2}\" Recipient=\"{0}\"/> 				  </saml:SubjectConfirmation> 				</saml:Subject> 				<saml:Conditions NotBefore=\"{1}\" NotOnOrAfter=\"{2}\"> 				  <saml:AudienceRestriction> 					<saml:Audience>{0}</saml:Audience> 				  </saml:AudienceRestriction> 				</saml:Conditions> 				<saml:AttributeStatement> 				  <saml:Attribute Name=\"givenName\"> 					<saml:AttributeValue>FIRSTNAME</saml:AttributeValue> 				  </saml:Attribute> 				  <saml:Attribute Name=\"sn\"> 					<saml:AttributeValue>LASTNAME</saml:AttributeValue> 				  </saml:Attribute> 				  <saml:Attribute Name=\"UserName\"> 					<saml:AttributeValue>{3}</saml:AttributeValue> 				  </saml:Attribute> 				  <saml:Attribute Name=\"DN\"> 					<saml:AttributeValue>CN=FNLN1</saml:AttributeValue> 				  </saml:Attribute> 				  <saml:Attribute Name=\"memberOf\"> 					<saml:AttributeValue>HoGeneric</saml:AttributeValue> 				  </saml:Attribute> 				</saml:AttributeStatement> 				<saml:AuthnStatement AuthnInstant=\"{1}\"> 				  <saml:AuthnContext> 					<saml:AuthnContextClassRef>urn:federation:authentication:windows</saml:AuthnContextClassRef> 				  </saml:AuthnContext> 				</saml:AuthnStatement> 			  </saml:Assertion> 			</samlp:Response>";
+class App extends Component {
+	 constructor(props) {		
+        super(props);
+		this.dateFormat = "{0}T{1}:00:00.361Z";//"2018-07-23T07:00:00.361Z"
+        this.state={host:"localhost", port:'8080',site:'dev',app:'Policyadmin-server',dateFormat: "{0}T{1}:00:00.361Z"};
+		this.handleSubmit = this.handleSubmit.bind(this);
+		this.handleHostChange = this.handleHostChange.bind(this);
+		this.handlePortChange = this.handlePortChange.bind(this);
+		this.handleSiteChange = this.handleSiteChange.bind(this);
+		this.validatePortChange = this.validatePortChange.bind(this);
+		this.handleAppChange = this.handleAppChange.bind(this);
+		this.handleUserChange = this.handleUserChange.bind(this);
+		
+		if (!String.prototype.format) {
+		  String.prototype.format = function() {
+			var args = arguments;
+			return this.replace(/{(\d+)}/g, function(match, number) { 
+			  return typeof args[number] !== 'undefined'
+				? args[number]
+				: match
+			  ;
+			});
+		  };
+		}	
+    }
+	
+	handleSubmit(event) {
+		var today = new Date();
+		 let dd = today.getDate();
+		 let mm = today.getMonth()+1;
+		const yyyy = today.getFullYear();
+		if(dd<10) 
+		{
+			dd=`0${dd}`;
+		}
+		if(mm<10) 
+		{
+			mm=`0${mm}`;
+		} 
+		let hours = today.getHours();
+		if(hours<10) 
+		{
+			hours=`0${hours}`;
+		} 
+		let nexthours = today.getHours()+1;
+		if(nexthours<10) 
+		{
+			nexthours=`0${nexthours}`;
+		}
+		var siteId = this.state.site;
+		if(!siteId ||siteId.length===0){
+			siteId = 'dev';
+			this.setState({site: siteId});
+		}
+		var userName = this.state.userName;
+		if(!userName ||userName.length===0){
+			alert("Invalid user name\n It is mandatory")
+			return false;
+		}
+		var currentDate = yyyy +"-"+mm+"-"+dd;
+		var urlTarget = "http://"+this.state.host+":"+this.state.port+"/"+siteId+"/"+this.state.app +"/saml/SSO";
+		var response = samlTemplate.format(urlTarget,this.state.dateFormat.format(currentDate,hours),this.state.dateFormat.format(currentDate,nexthours),userName);	
+		console.log(response);
+		fetch(urlTarget, {
+			mode : 'no-cors',
+            headers: {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'Content-Type': 'application/x-www-form-urlencoded',
+				'Access-Control-Allow-Origin' :'*',
+				'Accept-Encoding': 'gzip, deflate',
+				'Accept-Language': 'en-US,en;q=0.9',
+				'Cache-Control': 'max-age=0',
+				'Connection': 'keep-alive'
+            },
+			method: 'post',
+            body: 'SAMLResponse='+btoa(response)
+        });
+		event.preventDefault();	
+	}
+  handleHostChange(event) {
+    this.setState({host: event.target.value});
+  }
+  handlePortChange(event){	  
+	  this.setState({port: event.target.value});	   
+  }
+  handleSiteChange(event){
+	this.setState({site: event.target.value});
+  }
+   handleAppChange(event){
+	this.setState({app: event.target.value});
+  }
+validatePortChange(event){
+	var portNo = event.target.value;
+	if(typeof portNo ==='undefined' ||portNo.trim().length<2){
+		portNo = 80;
+	}
+	this.setState({port: portNo});
+}
+handleUserChange(event){
+	this.setState({userName: event.target.value});
+}
+  
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <h1 className="App-title">Welcome to SE2 Active Directory gateway</h1>
+        </header>
+        <p className="App-intro">
+          To get started, please add below ingormation and submit the form.
+        </p>
+		<div className="row">
+			<form className="container-fluid" onSubmit={this.handleSubmit}>
+					<div >
+					 <label htmlFor="host" className="text-left" >Host Name</label>
+					 <input name="host" id="host" type="text" value={this.state.host} onChange={this.handleHostChange}/>
+					</div>
+					<div>
+					 <label htmlFor="port">Port</label>
+					 <input name="port" id="port" type="text" value={this.state.port} onChange={this.handlePortChange} onBlur={this.validatePortChange} width ="40px"/>
+					</div>
+					<div>
+					 <label htmlFor="site">Site</label>
+					 <input name="site" id="site" type="text" placeholder="dev/modpc/modd8/modcd" onChange={this.handleSiteChange} />
+					</div>
+					<div>
+					<label htmlFor="app">Application</label>
+					 <select name="app" id ="app"  value={this.state.app}  onChange={this.handleAppChange} >
+						<option value="Supervisor-server">Supervisor-server</option>
+						<option value="Agent-server">Agent-server</option>
+						<option value="Policyadmin-server">Policyadmin-server</option>
+						<option value="Accountmgmt-server">Accountmgmt-server</option>
+						<option value="Productspec-server">Productspec-server</option>		
+					</select>
+					</div>
+					<div>
+					<label htmlFor="userName">User Id</label>
+					<input name="userName" id="userName" type="text" placeholder="Mandatory" onChange={this.handleUserChange}/>
+					</div>
+					<div>
+					 <button type="submit" className="btn btn-primary" >Submit</button>
+					</div>
+				
+			</form>
+			</div>
+		<div > 
+			
+			<Alert bsStyle="info">
+			  <strong> Target URL :</strong>http://{this.state.host}:{this.state.port}/{this.state.site}/{this.state.app}/saml/sso
+			</Alert>;
+					
+		</div> 
+      </div>
+
+    );
+  }
+}
+
+export default App;
